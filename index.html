@@ -550,7 +550,8 @@ function saveSession() {
   localStorage.setItem(SESSION_KEY, JSON.stringify({
     gameId, myRole, myState,
     myName: myState.name,
-    theirName: document.getElementById('their-kingdom-name')?.textContent || ''
+    theirName: document.getElementById('their-kingdom-label')?.textContent || '',
+    spyUntil, spyCooldownUntil, sabotCooldownUntil
   }));
 }
 
@@ -572,13 +573,12 @@ async function tryRestoreSession() {
     myRole = s.myRole;
     myState = s.myState;
 
-    // Re-apply all owned ability effects
-    for (const aid of (myState.abilities || [])) {
-      const a = ABILITIES.find(x => x.id === aid);
-      if (a) applyAbility(a.effect);
-    }
+    // Restore spy/sabotage cooldown timers
+    if (s.spyUntil) spyUntil = s.spyUntil;
+    if (s.spyCooldownUntil) spyCooldownUntil = s.spyCooldownUntil;
+    if (s.sabotCooldownUntil) sabotCooldownUntil = s.sabotCooldownUntil;
 
-    const theirName = myRole === 'p1' ? meta.p2name : meta.p1name;
+    const theirName = s.theirName || (myRole === 'p1' ? meta.p2name : meta.p1name);
     startGame(myState.name, theirName || 'Opponent');
     return true;
   } catch(e) { clearSession(); return false; }
@@ -682,6 +682,7 @@ function getBuildingCost(b, count) {
 // ===== FIREBASE PATHS =====
 function myRef()    { return db.ref(`games/${gameId}/${myRole}`); }
 function theirRef() { return db.ref(`games/${gameId}/${myRole === 'p1' ? 'p2' : 'p1'}`); }
+function opponentRole() { return myRole === 'p1' ? 'p2' : 'p1'; }
 function metaRef()  { return db.ref(`games/${gameId}/meta`); }
 
 // ===== CLEANUP old games (>24h) =====
@@ -790,8 +791,12 @@ function startGame(myName, theirName) {
 
   gameRunning = true;
 
+  // Explicitly capture opponent role at game start to avoid closure bugs
+  const opponentRole = myRole === 'p1' ? 'p2' : 'p1';
+  console.log('startGame: myRole=', myRole, 'opponentRole=', opponentRole);
+
   // Listen to opponent in real-time via Firebase
-  theirRef().on('value', snap => {
+  db.ref(`games/${gameId}/${opponentRole}`).on('value', snap => {
     const data = snap.val();
     if (data) {
       theirState = data;
