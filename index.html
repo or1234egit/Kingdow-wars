@@ -123,6 +123,13 @@ input[type="text"]:focus { border-color: var(--purple); }
   .arena { grid-template-columns: 1fr; }
   .vs-col { display: none; }
 }
+.kingdom-col { display: flex; flex-direction: column; gap: 6px; }
+.kingdom-label {
+  font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700;
+  letter-spacing: 2px; text-align: center; padding: 4px 0;
+}
+.mine-label { color: var(--p1); text-shadow: 0 0 20px rgba(201,150,26,0.4); }
+.their-label { color: var(--p2); text-shadow: 0 0 20px rgba(74,158,202,0.4); }
 
 .kingdom-panel {
   background: var(--panel); border: 1px solid var(--border);
@@ -241,6 +248,7 @@ input[type="text"]:focus { border-color: var(--purple); }
 
 @keyframes flash { 0%{background:rgba(245,200,66,0.15)} 100%{background:transparent} }
 .flash { animation: flash 0.5s ease; }
+.need-gold { font-size: 0.65rem; color: var(--red); margin-top: 2px; text-align: right; }
 </style>
 </head>
 <body>
@@ -294,6 +302,8 @@ input[type="text"]:focus { border-color: var(--purple); }
   </div>
 
   <div class="arena">
+    <div class="kingdom-col">
+      <div class="kingdom-label mine-label" id="my-kingdom-label">Your Kingdom</div>
     <div class="kingdom-panel mine">
       <div class="kp-header">
         <div class="kp-name" id="my-kingdom-name">My Kingdom</div>
@@ -310,6 +320,7 @@ input[type="text"]:focus { border-color: var(--purple); }
       </div>
       <div class="kp-body" id="my-body"></div>
     </div>
+    </div><!-- end kingdom-col -->
 
     <div class="vs-col">
       <div class="vs-badge">VS</div>
@@ -319,6 +330,8 @@ input[type="text"]:focus { border-color: var(--purple); }
       </div>
     </div>
 
+    <div class="kingdom-col">
+      <div class="kingdom-label their-label" id="their-kingdom-label">Opponent's Kingdom</div>
     <div class="kingdom-panel theirs">
       <div class="kp-header">
         <div class="kp-name" id="their-kingdom-name">Waiting...</div>
@@ -337,6 +350,7 @@ input[type="text"]:focus { border-color: var(--purple); }
         <div style="text-align:center;color:var(--muted);font-style:italic;padding:40px 16px">Awaiting opponent...</div>
       </div>
     </div>
+    </div><!-- end kingdom-col -->
   </div>
 
   <div class="game-log">
@@ -540,7 +554,9 @@ function startGame(myName, theirName) {
   document.getElementById('game').style.display = 'flex';
   document.getElementById('top-game-id').textContent = 'GAME ID: ' + gameId;
   document.getElementById('my-kingdom-name').textContent = myName;
+  document.getElementById('my-kingdom-label').textContent = myName;
   document.getElementById('their-kingdom-name').textContent = theirName || 'Opponent';
+  document.getElementById('their-kingdom-label').textContent = theirName || 'Opponent';
   document.getElementById('their-badge').textContent = 'OPPONENT';
   document.getElementById('their-badge').className = 'kp-badge their-badge';
 
@@ -627,67 +643,96 @@ function renderMine() {
   renderMyBuildings();
 }
 
+// Track which building/ability rows exist so we only PATCH, never rebuild
+const _builtRows = {}; // id -> true if row exists in DOM
+
 function renderMyBuildings() {
   const body = document.getElementById('my-body');
-  body.innerHTML = '';
 
-  // Buildings
-  const bs = document.createElement('div');
-  bs.className = 'section-sep';
-  bs.textContent = '🏗 Buildings';
-  body.appendChild(bs);
+  // First time: build the full structure once
+  if (!body.dataset.built) {
+    body.dataset.built = '1';
 
+    const bs = document.createElement('div');
+    bs.className = 'section-sep'; bs.textContent = '🏗 Buildings';
+    body.appendChild(bs);
+
+    for (const b of BUILDINGS) {
+      const row = document.createElement('div');
+      row.className = 'b-row'; row.id = 'brow-' + b.id;
+      row.style.display = 'none'; // hidden until unlocked
+      row.innerHTML = `
+        <div class="b-icon">${b.icon}</div>
+        <div class="b-info">
+          <div class="b-name">${b.name}</div>
+          <div class="b-stat">+${b.goldPerSec}g/s${b.power ? ' +' + b.power + 'pwr' : ''}</div>
+        </div>
+        <div class="b-right">
+          <div class="b-count" id="bcnt-${b.id}">0</div>
+          <button class="btn-buy" id="bbtn-${b.id}" onclick="buyBuilding('${b.id}')">Buy</button>
+        </div>`;
+      body.appendChild(row);
+    }
+
+    const as = document.createElement('div');
+    as.className = 'section-sep'; as.textContent = '✨ Abilities';
+    body.appendChild(as);
+
+    for (const a of ABILITIES) {
+      const row = document.createElement('div');
+      row.className = 'a-row'; row.id = 'arow-' + a.id;
+      row.style.display = 'none';
+      row.innerHTML = `
+        <div class="b-icon">${a.icon}</div>
+        <div class="b-info">
+          <div class="b-name">${a.name}</div>
+          <div class="b-stat">${a.desc}</div>
+        </div>
+        <div class="b-right" id="aright-${a.id}"></div>`;
+      body.appendChild(row);
+    }
+  }
+
+  // PATCH: just update values, never rebuild
   for (const b of BUILDINGS) {
     const count = myState.buildings[b.id] || 0;
     const unlocked = myState.gold >= b.unlockAt || count > 0;
+    const row = document.getElementById('brow-' + b.id);
+    if (!row) continue;
+
+    row.style.display = unlocked ? 'flex' : 'none';
     if (!unlocked) continue;
+
     const cost = getBuildingCost(b, count);
     const canAfford = myState.gold >= cost;
 
-    const row = document.createElement('div');
-    row.className = 'b-row';
-    row.innerHTML = `
-      <div class="b-icon">${b.icon}</div>
-      <div class="b-info">
-        <div class="b-name">${b.name}</div>
-        <div class="b-stat">+${b.goldPerSec}g/s${b.power ? ' +' + b.power + 'pwr' : ''}</div>
-      </div>
-      <div class="b-right">
-        <div class="b-count">${count}</div>
-        <button class="btn-buy" onclick="buyBuilding('${b.id}')" ${canAfford ? '' : 'disabled'}>
-          Buy 💰${fmt(cost)}
-        </button>
-      </div>`;
-    body.appendChild(row);
+    document.getElementById('bcnt-' + b.id).textContent = count;
+    const btn = document.getElementById('bbtn-' + b.id);
+    btn.textContent = `Buy 💰${fmt(cost)}`;
+    btn.disabled = !canAfford;
   }
-
-  // Abilities
-  const as = document.createElement('div');
-  as.className = 'section-sep';
-  as.textContent = '✨ Abilities';
-  body.appendChild(as);
 
   for (const a of ABILITIES) {
     const owned = (myState.abilities || []).includes(a.id);
     const unlocked = myState.gold >= a.unlockAt || owned;
-    if (!unlocked) continue;
-    const canAfford = myState.gold >= a.cost;
+    const row = document.getElementById('arow-' + a.id);
+    const right = document.getElementById('aright-' + a.id);
+    if (!row || !right) continue;
 
-    const row = document.createElement('div');
+    row.style.display = unlocked ? 'flex' : 'none';
+    if (!unlocked) continue;
+
     row.className = 'a-row' + (owned ? ' owned' : '');
-    row.innerHTML = `
-      <div class="b-icon">${a.icon}</div>
-      <div class="b-info">
-        <div class="b-name">${a.name}</div>
-        <div class="b-stat">${a.desc}</div>
-      </div>
-      <div class="b-right">
-        ${owned
-          ? '<span style="font-size:0.7rem;color:var(--green)">✓ ACTIVE</span>'
-          : `<button class="btn-buy" onclick="buyAbility('${a.id}')" ${canAfford ? '' : 'disabled'}>Unlock 💰${fmt(a.cost)}</button>`
-        }
-      </div>`;
-    body.appendChild(row);
+
+    if (owned) {
+      right.innerHTML = '<span style="font-size:0.7rem;color:var(--green)">✓ ACTIVE</span>';
+    } else {
+      const canAfford = myState.gold >= a.cost;
+      const need = fmt(a.cost - myState.gold);
+      const tooltip = canAfford ? '' : `title="Need ${need} more gold"`;
+      right.innerHTML = `<button class="btn-buy" onclick="buyAbility('${a.id}')" ${canAfford ? '' : `disabled ${tooltip}`}>Unlock 💰${fmt(a.cost)}</button>
+        ${!canAfford ? `<div class="need-gold">Need ${need} more 💰</div>` : ''}`;
+    }
   }
 }
 
