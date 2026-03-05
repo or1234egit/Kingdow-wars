@@ -121,7 +121,7 @@ input[type="text"]:focus { border-color: var(--purple); }
 }
 @media (max-width: 700px) {
   .arena { grid-template-columns: 1fr; }
-  .vs-col { display: none; }
+  .action-bar { display: none; }
 }
 .kingdom-col { display: flex; flex-direction: column; gap: 6px; }
 .kingdom-label {
@@ -249,6 +249,123 @@ input[type="text"]:focus { border-color: var(--purple); }
 @keyframes flash { 0%{background:rgba(245,200,66,0.15)} 100%{background:transparent} }
 .flash { animation: flash 0.5s ease; }
 .need-gold { font-size: 0.65rem; color: var(--red); margin-top: 2px; text-align: right; }
+/* ===== FOG / SPY / SABOTAGE ===== */
+.fog-overlay {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px;
+}
+.fog-stat {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 12px; background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 4px; font-size: 0.85rem;
+}
+.fog-stat .label { color: var(--muted); }
+.fog-stat .val { font-family: 'Cinzel', serif; color: var(--text); }
+.fog-revealed { color: var(--green) !important; }
+
+.fog-unknown {
+  text-align: center; padding: 24px 12px;
+  color: var(--muted); font-style: italic; font-size: 0.85rem;
+  border: 1px dashed var(--border); border-radius: 4px; margin: 8px 0;
+}
+
+.action-bar {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; min-width: 90px;
+}
+.action-btn {
+  width: 82px; padding: 7px 6px; border-radius: 4px;
+  font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 0.5px;
+  cursor: pointer; text-align: center; transition: all 0.2s;
+  border: 1px solid; line-height: 1.4;
+}
+.action-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.action-btn .cost { display: block; font-size: 0.6rem; margin-top: 2px; opacity: 0.8; }
+
+.btn-spy { background: linear-gradient(135deg,#1a3a2a,#0f2a1a); border-color: #3dba6a; color: #5dba6a; }
+.btn-spy:hover:not(:disabled) { background: linear-gradient(135deg,#2a5a3a,#1a3a2a); box-shadow: 0 0 12px rgba(93,186,106,0.25); }
+
+.btn-sabotage { background: linear-gradient(135deg,#3a1a1a,#2a0f0f); border-color: #e05252; color: #e05252; }
+.btn-sabotage:hover:not(:disabled) { background: linear-gradient(135deg,#5a2a2a,#3a1a1a); box-shadow: 0 0 12px rgba(224,82,82,0.25); }
+
+.btn-shield { background: linear-gradient(135deg,#1a2a3a,#0f1a2a); border-color: #4a9eca; color: #4a9eca; }
+.btn-shield:hover:not(:disabled) { background: linear-gradient(135deg,#2a3a5a,#1a2a3a); box-shadow: 0 0 12px rgba(74,158,202,0.25); }
+
+.shield-active {
+  font-size: 0.65rem; color: var(--blue);
+  background: rgba(74,158,202,0.1); border: 1px solid var(--blue);
+  border-radius: 3px; padding: 3px 6px; text-align: center;
+}
+.spy-timer {
+  font-size: 0.65rem; color: var(--green);
+  background: rgba(93,186,106,0.1); border: 1px solid var(--green);
+  border-radius: 3px; padding: 3px 6px; text-align: center;
+}
+.cd-text { font-size: 0.6rem; color: var(--muted); text-align: center; margin-top: 2px; }
+
+/* Sabotage picker modal */
+#sabotage-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(8,6,8,0.9); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.sabotage-box {
+  background: var(--panel); border: 1px solid var(--red);
+  border-radius: 8px; padding: 28px 32px; max-width: 360px; width: 90%;
+}
+.sabotage-box h3 { font-family: 'Cinzel', serif; color: var(--red); font-size: 1rem; margin-bottom: 6px; }
+.sabotage-box p { color: var(--muted); font-size: 0.82rem; font-style: italic; margin-bottom: 16px; }
+.sabotage-targets { display: flex; flex-direction: column; gap: 8px; }
+.sab-target {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 4px; cursor: pointer; transition: all 0.15s;
+}
+.sab-target:hover { border-color: var(--red); background: rgba(224,82,82,0.06); }
+.sab-target .sab-icon { font-size: 1.3rem; }
+.sab-target .sab-info { flex:1; }
+.sab-target .sab-name { font-family: 'Cinzel', serif; font-size: 0.8rem; }
+.sab-target .sab-count { font-size: 0.72rem; color: var(--muted); }
+.sab-cancel {
+  margin-top: 14px; width: 100%; padding: 8px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); font-family: 'Cinzel', serif; font-size: 0.75rem;
+  cursor: pointer; border-radius: 4px; transition: all 0.2s;
+}
+.sab-cancel:hover { border-color: var(--muted); color: var(--text); }
+
+
+.btn-exit {
+  padding: 6px 14px; background: transparent; border: 1px solid #4a2a2a;
+  color: var(--muted); font-family: 'Cinzel', serif; font-size: 0.72rem;
+  cursor: pointer; border-radius: 4px; transition: all 0.2s; letter-spacing: 1px;
+}
+.btn-exit:hover { border-color: var(--red); color: var(--red); background: rgba(224,82,82,0.08); }
+
+#confirm-modal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(8,6,8,0.88); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.confirm-box {
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 36px 40px; text-align: center; max-width: 380px;
+}
+.confirm-box h3 { font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--text); margin-bottom: 10px; }
+.confirm-box p { color: var(--muted); font-style: italic; font-size: 0.95rem; margin-bottom: 24px; }
+.confirm-btns { display: flex; gap: 12px; justify-content: center; }
+.btn-confirm-yes {
+  padding: 10px 24px; background: linear-gradient(135deg, #6a1a1a, #4a0f0f);
+  border: 1px solid var(--red); color: var(--red);
+  font-family: 'Cinzel', serif; font-size: 0.8rem; cursor: pointer;
+  border-radius: 4px; transition: all 0.2s; letter-spacing: 1px;
+}
+.btn-confirm-yes:hover { background: linear-gradient(135deg, #8a2a2a, #6a1a1a); }
+.btn-confirm-no {
+  padding: 10px 24px; background: var(--panel2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Cinzel', serif; font-size: 0.8rem; cursor: pointer;
+  border-radius: 4px; transition: all 0.2s; letter-spacing: 1px;
+}
+.btn-confirm-no:hover { border-color: var(--muted); }
 </style>
 </head>
 <body>
@@ -298,7 +415,10 @@ input[type="text"]:focus { border-color: var(--purple); }
       <div class="topbar-title">⚔️ KINGDOM WARS</div>
       <div class="topbar-id" id="top-game-id"></div>
     </div>
-    <div class="topbar-right">First to 10,000 gold wins! 🏆</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="topbar-right">First to 10,000 gold wins! 🏆</div>
+      <button class="btn-exit" onclick="confirmExit()">🚪 Exit</button>
+    </div>
   </div>
 
   <div class="arena">
@@ -322,11 +442,42 @@ input[type="text"]:focus { border-color: var(--purple); }
     </div>
     </div><!-- end kingdom-col -->
 
-    <div class="vs-col">
-      <div class="vs-badge">VS</div>
+    <div class="action-bar" id="action-bar">
+      <div class="vs-badge" style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--muted);">VS</div>
+
+      <!-- SPY -->
       <div>
-        <button class="btn-raid" id="raid-btn" onclick="doRaid()" disabled>⚔ RAID</button>
-        <div class="raid-cd" id="raid-cd">Need 5+ power</div>
+        <button class="action-btn btn-spy" id="spy-btn" onclick="doSpy()" disabled>
+          🔍 SPY<span class="cost">💰200</span>
+        </button>
+        <div class="cd-text" id="spy-cd">Need opponent</div>
+      </div>
+
+      <!-- SABOTAGE -->
+      <div>
+        <button class="action-btn btn-sabotage" id="sab-btn" onclick="openSabotage()" disabled>
+          💣 SABOTAGE<span class="cost">💰500</span>
+        </button>
+        <div class="cd-text" id="sab-cd">Spy first</div>
+      </div>
+
+      <!-- RAID -->
+      <div>
+        <button class="action-btn btn-raid" id="raid-btn" onclick="doRaid()" disabled style="background:linear-gradient(135deg,#3a1a3a,#2a0f2a);border-color:#9b6fd4;color:#9b6fd4;">
+          ⚔️ RAID<span class="cost">5+ power</span>
+        </button>
+        <div class="cd-text" id="raid-cd">Build Barracks</div>
+      </div>
+
+      <!-- SHIELD status -->
+      <div id="shield-status" style="display:none">
+        <div class="shield-active">🛡 Shielded!</div>
+      </div>
+      <div>
+        <button class="action-btn btn-shield" id="shield-btn" onclick="buyShield()" disabled>
+          🛡 SHIELD<span class="cost">💰800</span>
+        </button>
+        <div class="cd-text" id="shield-cd">Protects 1 sabotage</div>
       </div>
     </div>
 
@@ -358,6 +509,28 @@ input[type="text"]:focus { border-color: var(--purple); }
   </div>
 </div>
 
+<!-- SABOTAGE PICKER -->
+<div id="sabotage-modal">
+  <div class="sabotage-box">
+    <h3>💣 Choose Target</h3>
+    <p>Destroy one of your opponent's buildings. This cannot be undone.</p>
+    <div class="sabotage-targets" id="sabotage-targets"></div>
+    <button class="sab-cancel" onclick="closeSabotage()">Cancel</button>
+  </div>
+</div>
+
+<!-- CONFIRM EXIT MODAL -->
+<div id="confirm-modal">
+  <div class="confirm-box">
+    <h3>⚠️ Abandon Kingdom?</h3>
+    <p>Your progress will be lost and your opponent will win by default.</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-yes" onclick="exitGame()">Yes, Surrender</button>
+      <button class="btn-confirm-no" onclick="closeConfirm()">Stay & Fight</button>
+    </div>
+  </div>
+</div>
+
 <!-- WIN -->
 <div id="win-screen">
   <div class="win-box">
@@ -369,6 +542,48 @@ input[type="text"]:focus { border-color: var(--purple); }
 </div>
 
 <script>
+// ===== SESSION STORAGE =====
+const SESSION_KEY = 'kw_session';
+
+function saveSession() {
+  if (!gameId || !myRole || !myState) return;
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    gameId, myRole, myState,
+    myName: myState.name,
+    theirName: document.getElementById('their-kingdom-name')?.textContent || ''
+  }));
+}
+
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY);
+}
+
+async function tryRestoreSession() {
+  const raw = localStorage.getItem(SESSION_KEY);
+  if (!raw) return false;
+  try {
+    const s = JSON.parse(raw);
+    // Check game still exists in Firebase
+    const snap = await db.ref(`games/${s.gameId}/meta`).once('value');
+    const meta = snap.val();
+    if (!meta || meta.winner) { clearSession(); return false; }
+
+    gameId = s.gameId;
+    myRole = s.myRole;
+    myState = s.myState;
+
+    // Re-apply all owned ability effects
+    for (const aid of (myState.abilities || [])) {
+      const a = ABILITIES.find(x => x.id === aid);
+      if (a) applyAbility(a.effect);
+    }
+
+    const theirName = myRole === 'p1' ? meta.p2name : meta.p1name;
+    startGame(myState.name, theirName || 'Opponent');
+    return true;
+  } catch(e) { clearSession(); return false; }
+}
+
 // ===== FIREBASE INIT =====
 const firebaseConfig = {
   databaseURL: "https://kingdom-wars-e7879-default-rtdb.firebaseio.com"
@@ -378,9 +593,15 @@ const db = firebase.database();
 
 // ===== CONSTANTS =====
 const WIN_GOLD = 10000;
-const RAID_COOLDOWN = 30000; // ms
-const SAVE_INTERVAL = 1500;  // save to Firebase every 1.5s
-const TICK = 200;            // local tick ms
+const RAID_COOLDOWN = 30000;
+const SPY_COST = 200;
+const SPY_DURATION = 30000; // 30s reveal
+const SPY_COOLDOWN = 45000;
+const SABOTAGE_COST = 500;
+const SABOTAGE_COOLDOWN = 60000;
+const SHIELD_COST = 800;
+const SAVE_INTERVAL = 1500;
+const TICK = 200;
 
 const BUILDINGS = [
   { id:'farm',     name:'Farm',          icon:'🌾', baseCost:10,   costMult:1.4,  goldPerSec:0.5, popPerSec:0.2, power:0, unlockAt:0 },
@@ -417,9 +638,16 @@ function freshState(name) {
     buildings: { farm:0, market:0, mine:0, barracks:0, wizard:0 },
     abilities: [],
     raidCooldownUntil: 0,
+    shielded: false,
     lastSave: Date.now(),
   };
 }
+
+// Client-only (not saved to Firebase)
+let spyActive = false;
+let spyUntil = 0;
+let spyCooldownUntil = 0;
+let sabotCooldownUntil = 0;
 
 // ===== HELPERS =====
 function fmt(n) {
@@ -582,6 +810,27 @@ function startGame(myName, theirName) {
     }
   });
 
+  // Listen for sabotage on us
+  db.ref(`games/${gameId}/sabotage`).on('child_added', snap => {
+    const sab = snap.val();
+    if (sab && sab.target === myRole && sab.at > (Date.now() - 5000)) {
+      if (myState.shielded) {
+        myState.shielded = false;
+        logMsg('🛡 SABOTAGE BLOCKED by your Shield! Shield consumed.');
+      } else {
+        const bid = sab.buildingId;
+        const count = myState.buildings[bid] || 0;
+        if (count > 0) {
+          myState.buildings[bid] = count - 1;
+          const b = BUILDINGS.find(x => x.id === bid);
+          logMsg(`💥 SABOTAGED! Lost one ${b ? b.name : 'building'}!`);
+        } else {
+          logMsg('💣 Sabotage missed — they targeted a building you don\'t have!');
+        }
+      }
+    }
+  });
+
   // Listen for winner
   metaRef().on('value', snap => {
     const meta = snap.val();
@@ -612,6 +861,7 @@ function saveLoop() {
   if (!gameRunning) return;
   myState.lastSave = Date.now();
   myRef().set(myState).catch(() => {});
+  saveSession();
   setTimeout(saveLoop, SAVE_INTERVAL);
 }
 
@@ -627,17 +877,47 @@ function renderMine() {
   document.getElementById('my-prog').style.width = pct + '%';
   document.getElementById('my-pct').textContent = pct.toFixed(1) + '%';
 
-  // Raid button
   const now = Date.now();
+
+  // SPY button
+  const spyReady = myState.gold >= SPY_COST && now > spyCooldownUntil && theirState;
+  document.getElementById('spy-btn').disabled = !spyReady;
+  if (!theirState) {
+    document.getElementById('spy-cd').textContent = 'No opponent yet';
+  } else if (now < spyCooldownUntil) {
+    document.getElementById('spy-cd').textContent = 'CD: ' + Math.ceil((spyCooldownUntil-now)/1000) + 's';
+  } else if (spyActive) {
+    const left = Math.ceil((spyUntil - now)/1000);
+    document.getElementById('spy-cd').textContent = '👁 Revealed: ' + left + 's';
+  } else {
+    document.getElementById('spy-cd').textContent = myState.gold >= SPY_COST ? 'Ready!' : 'Need gold';
+  }
+
+  // SABOTAGE button
+  const sabReady = myState.gold >= SABOTAGE_COST && now > sabotCooldownUntil && theirState;
+  document.getElementById('sab-btn').disabled = !sabReady;
+  if (now < sabotCooldownUntil) {
+    document.getElementById('sab-cd').textContent = 'CD: ' + Math.ceil((sabotCooldownUntil-now)/1000) + 's';
+  } else {
+    document.getElementById('sab-cd').textContent = sabReady ? 'Ready!' : (myState.gold < SABOTAGE_COST ? 'Need gold' : 'No opponent');
+  }
+
+  // SHIELD button
+  const shieldReady = myState.gold >= SHIELD_COST && !myState.shielded;
+  document.getElementById('shield-btn').disabled = !shieldReady;
+  document.getElementById('shield-status').style.display = myState.shielded ? 'block' : 'none';
+  document.getElementById('shield-cd').textContent = myState.shielded ? 'Active — blocks 1 hit' : (myState.gold >= SHIELD_COST ? 'Ready!' : 'Need gold');
+
+  // RAID button
   const raidReady = pwr >= 5 && now > (myState.raidCooldownUntil || 0) && theirState;
   document.getElementById('raid-btn').disabled = !raidReady;
   if (pwr < 5) {
-    document.getElementById('raid-cd').textContent = 'Need 5+ power';
+    document.getElementById('raid-cd').textContent = 'Build Barracks';
   } else if (now < (myState.raidCooldownUntil || 0)) {
     const secs = Math.ceil(((myState.raidCooldownUntil || 0) - now) / 1000);
-    document.getElementById('raid-cd').textContent = 'Cooldown: ' + secs + 's';
+    document.getElementById('raid-cd').textContent = 'CD: ' + secs + 's';
   } else {
-    document.getElementById('raid-cd').textContent = theirState ? '⚔️ Ready!' : 'No opponent yet';
+    document.getElementById('raid-cd').textContent = theirState ? 'Ready!' : 'No opponent';
   }
 
   renderMyBuildings();
@@ -737,60 +1017,85 @@ function renderMyBuildings() {
 }
 
 // ===== RENDER THEIR PANEL =====
+function goldRateLabel(g) {
+  if (g < 1)   return { txt: '🐢 Slow',   cls: '' };
+  if (g < 5)   return { txt: '🚶 Steady',  cls: '' };
+  if (g < 15)  return { txt: '🏃 Fast',    cls: 'fog-revealed' };
+  if (g < 40)  return { txt: '⚡ Very Fast',cls: 'fog-revealed' };
+  return           { txt: '🔥 Insane',   cls: 'fog-revealed' };
+}
+
 function renderTheirs() {
   if (!theirState) return;
   const { g, pwr } = calcRates(theirState);
+  const now = Date.now();
+  spyActive = now < spyUntil;
 
-  document.getElementById('their-gold').textContent = fmt(theirState.gold);
-  document.getElementById('their-pop').textContent = fmt(theirState.population);
-  document.getElementById('their-power').textContent = fmt(pwr);
-  document.getElementById('their-rate').textContent = '+' + g.toFixed(1) + '/s';
-
+  // Progress bar always visible
   const pct = Math.min(100, ((theirState.gold || 0) / WIN_GOLD) * 100);
   document.getElementById('their-prog').style.width = pct + '%';
   document.getElementById('their-pct').textContent = pct.toFixed(1) + '%';
 
-  const body = document.getElementById('their-body');
-  body.innerHTML = '';
+  if (spyActive) {
+    // FULL REVEAL
+    document.getElementById('their-gold').textContent = fmt(theirState.gold);
+    document.getElementById('their-pop').textContent = fmt(theirState.population);
+    document.getElementById('their-power').textContent = fmt(pwr);
+    document.getElementById('their-rate').textContent = '+' + g.toFixed(1) + '/s';
 
-  const bs = document.createElement('div');
-  bs.className = 'section-sep';
-  bs.textContent = '🏗 Buildings';
-  body.appendChild(bs);
+    const body = document.getElementById('their-body');
+    body.innerHTML = '<div class="spy-timer">👁 SPY ACTIVE — ' + Math.ceil((spyUntil-now)/1000) + 's</div>';
 
-  let hasBuildings = false;
-  for (const b of BUILDINGS) {
-    const count = (theirState.buildings && theirState.buildings[b.id]) || 0;
-    if (count === 0) continue;
-    hasBuildings = true;
-    const row = document.createElement('div');
-    row.className = 'b-row';
-    row.innerHTML = `
-      <div class="b-icon">${b.icon}</div>
-      <div class="b-info"><div class="b-name">${b.name}</div><div class="b-stat">+${b.goldPerSec}g/s</div></div>
-      <div class="b-right"><div class="b-count">${count}</div></div>`;
-    body.appendChild(row);
-  }
-  if (!hasBuildings) {
-    const p = document.createElement('div');
-    p.style.cssText = 'color:var(--muted);font-style:italic;font-size:0.82rem;padding:8px 0;';
-    p.textContent = 'No buildings yet...';
-    body.appendChild(p);
-  }
-
-  if (theirState.abilities && theirState.abilities.length > 0) {
-    const as = document.createElement('div');
-    as.className = 'section-sep';
-    as.textContent = '✨ Abilities';
-    body.appendChild(as);
-    for (const aid of theirState.abilities) {
-      const a = ABILITIES.find(x => x.id === aid);
-      if (!a) continue;
+    const bs = document.createElement('div');
+    bs.className = 'section-sep'; bs.textContent = '🏗 Buildings (REVEALED)';
+    body.appendChild(bs);
+    let any = false;
+    for (const b of BUILDINGS) {
+      const count = (theirState.buildings && theirState.buildings[b.id]) || 0;
+      if (!count) continue; any = true;
       const row = document.createElement('div');
-      row.className = 'a-row owned';
-      row.innerHTML = `<div class="b-icon">${a.icon}</div><div class="b-info"><div class="b-name">${a.name}</div><div class="b-stat">${a.desc}</div></div>`;
+      row.className = 'b-row';
+      row.innerHTML = `<div class="b-icon">${b.icon}</div><div class="b-info"><div class="b-name">${b.name}</div><div class="b-stat">+${b.goldPerSec}g/s</div></div><div class="b-right"><div class="b-count">${count}</div></div>`;
       body.appendChild(row);
     }
+    if (!any) { const p = document.createElement('div'); p.style.cssText='color:var(--muted);font-style:italic;font-size:0.82rem;padding:6px 0;'; p.textContent='No buildings yet'; body.appendChild(p); }
+
+    if (theirState.abilities && theirState.abilities.length > 0) {
+      const as = document.createElement('div'); as.className = 'section-sep'; as.textContent = '✨ Abilities (REVEALED)'; body.appendChild(as);
+      for (const aid of theirState.abilities) {
+        const a = ABILITIES.find(x => x.id === aid); if (!a) continue;
+        const row = document.createElement('div'); row.className = 'a-row owned';
+        row.innerHTML = `<div class="b-icon">${a.icon}</div><div class="b-info"><div class="b-name">${a.name}</div><div class="b-stat">${a.desc}</div></div>`;
+        body.appendChild(row);
+      }
+    }
+    if (theirState.shielded) {
+      const s = document.createElement('div'); s.className='shield-active'; s.style.margin='8px 0';
+      s.textContent = '🛡 They have a Shield!'; body.appendChild(s);
+    }
+  } else {
+    // FOG OF WAR
+    const rate = goldRateLabel(g);
+    const totalBuildings = BUILDINGS.reduce((s,b) => s + ((theirState.buildings && theirState.buildings[b.id]) || 0), 0);
+    const totalAbilities = (theirState.abilities || []).length;
+
+    document.getElementById('their-gold').textContent = '???';
+    document.getElementById('their-pop').textContent = '???';
+    document.getElementById('their-power').textContent = '???';
+    document.getElementById('their-rate').textContent = '???';
+
+    const body = document.getElementById('their-body');
+    body.innerHTML = '';
+
+    const fog = document.createElement('div'); fog.className = 'fog-overlay';
+    fog.innerHTML = `
+      <div class="fog-stat"><span class="label">Income speed</span><span class="val ${rate.cls}">${rate.txt}</span></div>
+      <div class="fog-stat"><span class="label">Buildings</span><span class="val">${totalBuildings} total</span></div>
+      <div class="fog-stat"><span class="label">Abilities</span><span class="val">${totalAbilities > 0 ? totalAbilities + ' unlocked' : 'None'}</span></div>
+      <div class="fog-stat"><span class="label">Shield</span><span class="val">${theirState.shielded ? '🛡 Yes' : '—'}</span></div>
+      <div class="fog-unknown">🌫 Details hidden — use Spy to reveal</div>
+    `;
+    body.appendChild(fog);
   }
 }
 
@@ -873,9 +1178,116 @@ function showWin(iWon, winnerName) {
     ? `${winnerName} has amassed 10,000 gold and conquered the realm!`
     : `${winnerName} reached 10,000 gold first. Your kingdom falls...`;
 
+  clearSession();
   // Delete game from Firebase after win
   setTimeout(() => db.ref(`games/${gameId}`).remove().catch(() => {}), 3000);
 }
+
+// ===== SPY =====
+function doSpy() {
+  if (myState.gold < SPY_COST || !theirState) return;
+  const now = Date.now();
+  if (now < spyCooldownUntil) return;
+  myState.gold -= SPY_COST;
+  spyUntil = now + SPY_DURATION;
+  spyCooldownUntil = now + SPY_COOLDOWN;
+  spyActive = true;
+  logMsg('🔍 Spy dispatched! Opponent revealed for 30 seconds.');
+  renderTheirs();
+}
+
+// ===== SABOTAGE =====
+function openSabotage() {
+  if (myState.gold < SABOTAGE_COST || !theirState) return;
+  const targets = document.getElementById('sabotage-targets');
+  targets.innerHTML = '';
+  const now = Date.now();
+  if (now < sabotCooldownUntil) return;
+
+  let anyBuildings = false;
+  if (spyActive) {
+    // Show exact buildings
+    for (const b of BUILDINGS) {
+      const count = (theirState.buildings && theirState.buildings[b.id]) || 0;
+      if (!count) continue;
+      anyBuildings = true;
+      const row = document.createElement('div');
+      row.className = 'sab-target';
+      row.innerHTML = `<div class="sab-icon">${b.icon}</div><div class="sab-info"><div class="sab-name">${b.name}</div><div class="sab-count">${count} owned</div></div><div style="color:var(--red);font-size:0.8rem;">Destroy 1</div>`;
+      row.onclick = () => executeSabotage(b.id, b.name);
+      targets.appendChild(row);
+    }
+    if (!anyBuildings) {
+      targets.innerHTML = '<div class="fog-unknown">Opponent has no buildings to destroy!</div>';
+    }
+  } else {
+    // Blind sabotage — show building types as blind picks
+    const blindMsg = document.createElement('div');
+    blindMsg.style.cssText = 'color:var(--muted);font-size:0.8rem;font-style:italic;margin-bottom:8px;padding:6px 10px;background:rgba(224,82,82,0.06);border:1px solid #4a2a2a;border-radius:4px;';
+    blindMsg.textContent = '⚠️ You have not spied — this is a blind attack! Pick a building type to target.';
+    targets.appendChild(blindMsg);
+    for (const b of BUILDINGS) {
+      const row = document.createElement('div');
+      row.className = 'sab-target';
+      row.innerHTML = `<div class="sab-icon">${b.icon}</div><div class="sab-info"><div class="sab-name">${b.name}</div><div class="sab-count">Blind target</div></div><div style="color:var(--red);font-size:0.8rem;">Gamble</div>`;
+      row.onclick = () => executeSabotage(b.id, b.name);
+      targets.appendChild(row);
+    }
+  }
+  document.getElementById('sabotage-modal').style.display = 'flex';
+}
+
+function closeSabotage() {
+  document.getElementById('sabotage-modal').style.display = 'none';
+}
+
+async function executeSabotage(buildingId, buildingName) {
+  closeSabotage();
+  if (myState.gold < SABOTAGE_COST) return;
+  myState.gold -= SABOTAGE_COST;
+  sabotCooldownUntil = Date.now() + SABOTAGE_COOLDOWN;
+
+  const theirRole = myRole === 'p1' ? 'p2' : 'p1';
+  await db.ref(`games/${gameId}/sabotage`).push({
+    by: myRole, target: theirRole, buildingId, at: Date.now()
+  });
+  logMsg(`💣 Sabotaged! Targeted opponent's ${buildingName}.`);
+}
+
+// ===== SHIELD =====
+function buyShield() {
+  if (myState.gold < SHIELD_COST || myState.shielded) return;
+  myState.gold -= SHIELD_COST;
+  myState.shielded = true;
+  logMsg('🛡 Shield activated! Your kingdom is protected from the next sabotage.');
+}
+
+// ===== EXIT =====
+function confirmExit() {
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+function closeConfirm() {
+  document.getElementById('confirm-modal').style.display = 'none';
+}
+async function exitGame() {
+  clearSession();
+  gameRunning = false;
+  winShown = true;
+  // Notify Firebase that this player surrendered
+  try {
+    const winner = myRole === 'p1' ? 'p2' : 'p1';
+    await metaRef().update({ winner, surrendered: myRole });
+  } catch(e) {}
+  theirRef().off();
+  metaRef().off();
+  db.ref(`games/${gameId}/raids`).off();
+  location.reload();
+}
+
+// ===== INIT: try to restore session on page load =====
+window.addEventListener('load', async () => {
+  await tryRestoreSession();
+});
 
 // ===== LOG =====
 function logMsg(msg) {
