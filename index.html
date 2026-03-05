@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <title>Kingdom Wars — Multiplayer</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
 <style>
 :root {
   --gold: #f5c842;
@@ -21,7 +26,6 @@
   --p1: #c9961a;
   --p2: #4a9eca;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: var(--bg);
@@ -35,375 +39,235 @@ body {
 
 /* ===== LOBBY ===== */
 #lobby {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  padding: 32px 16px;
-  gap: 32px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 100vh; padding: 32px 16px; gap: 28px;
 }
-
-.logo {
-  text-align: center;
-}
+.logo { text-align: center; }
 .logo h1 {
   font-family: 'Cinzel', serif;
   font-size: clamp(1.8rem, 5vw, 3rem);
-  color: var(--gold);
-  letter-spacing: 6px;
+  color: var(--gold); letter-spacing: 6px;
   text-shadow: 0 0 40px rgba(245,200,66,0.35);
 }
 .logo p { color: var(--muted); font-style: italic; margin-top: 6px; }
 
 .lobby-box {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 28px 32px;
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 8px; padding: 28px 32px;
+  width: 100%; max-width: 400px;
+  display: flex; flex-direction: column; gap: 14px;
 }
-
 .lobby-box h2 {
-  font-family: 'Cinzel', serif;
-  font-size: 0.8rem;
-  letter-spacing: 3px;
-  color: var(--purple);
-  text-transform: uppercase;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
+  font-family: 'Cinzel', serif; font-size: 0.8rem;
+  letter-spacing: 3px; color: var(--purple); text-transform: uppercase;
+  padding-bottom: 10px; border-bottom: 1px solid var(--border);
 }
-
 .field-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
-
 input[type="text"] {
-  width: 100%;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: 'Cinzel', serif;
-  font-size: 1rem;
-  padding: 10px 14px;
-  border-radius: 4px;
-  outline: none;
-  transition: border-color 0.2s;
-  letter-spacing: 2px;
+  width: 100%; background: var(--panel2); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Cinzel', serif; font-size: 1rem;
+  padding: 10px 14px; border-radius: 4px; outline: none;
+  transition: border-color 0.2s; letter-spacing: 2px;
 }
 input[type="text"]:focus { border-color: var(--purple); }
-
 .btn-primary {
   padding: 12px 24px;
   background: linear-gradient(135deg, #5a3e8b, #3d2a6a);
-  border: 1px solid var(--purple);
-  color: var(--text);
-  font-family: 'Cinzel', serif;
-  font-size: 0.85rem;
-  letter-spacing: 2px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s;
-  text-transform: uppercase;
+  border: 1px solid var(--purple); color: var(--text);
+  font-family: 'Cinzel', serif; font-size: 0.85rem;
+  letter-spacing: 2px; cursor: pointer; border-radius: 4px;
+  transition: all 0.2s; text-transform: uppercase;
 }
 .btn-primary:hover { background: linear-gradient(135deg, #7a5eab, #5a3e8b); box-shadow: 0 0 20px rgba(155,111,212,0.3); }
 .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.divider { text-align: center; color: var(--muted); font-size: 0.8rem; position: relative; }
-.divider::before, .divider::after {
-  content: '';
-  position: absolute;
-  top: 50%; width: calc(50% - 24px);
-  height: 1px; background: var(--border);
-}
-.divider::before { left: 0; }
-.divider::after { right: 0; }
-
 .game-id-display {
-  background: var(--panel2);
-  border: 1px solid var(--gold-dark);
-  border-radius: 4px;
-  padding: 12px;
-  text-align: center;
-  font-family: 'Cinzel', serif;
-  font-size: 1.4rem;
-  color: var(--gold);
-  letter-spacing: 6px;
-  cursor: pointer;
+  background: var(--panel2); border: 1px solid var(--gold-dark);
+  border-radius: 4px; padding: 14px; text-align: center;
+  font-family: 'Cinzel', serif; font-size: 1.6rem;
+  color: var(--gold); letter-spacing: 8px; cursor: pointer;
   transition: background 0.2s;
 }
 .game-id-display:hover { background: #2a2010; }
-.copy-hint { font-size: 0.7rem; color: var(--muted); text-align: center; margin-top: -8px; }
+.copy-hint { font-size: 0.7rem; color: var(--muted); text-align: center; }
 
-.waiting-pulse {
-  text-align: center;
-  color: var(--muted);
-  font-style: italic;
-  font-size: 0.9rem;
-  animation: pulse 2s infinite;
+.status-msg {
+  text-align: center; font-style: italic; font-size: 0.9rem;
+  padding: 8px; border-radius: 4px;
 }
-@keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+.status-waiting { color: var(--muted); animation: pulse 2s infinite; }
+.status-error { color: var(--red); background: rgba(224,82,82,0.1); border: 1px solid var(--red); }
+.status-success { color: var(--green); }
 
-/* ===== GAME UI ===== */
+@keyframes pulse { 0%,100%{opacity:0.5} 50%{opacity:1} }
+
+/* ===== GAME ===== */
 #game { display: none; flex-direction: column; min-height: 100vh; }
 
-/* TOP BAR */
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
-  gap: 8px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 20px; background: var(--panel);
+  border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
 }
-.topbar-title { font-family: 'Cinzel', serif; font-size: 0.9rem; color: var(--muted); }
-.topbar-id { font-family: 'Cinzel', serif; font-size: 0.75rem; color: var(--purple); letter-spacing: 2px; }
+.topbar-left { display: flex; flex-direction: column; gap: 2px; }
+.topbar-title { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold); }
+.topbar-id { font-family: 'Cinzel', serif; font-size: 0.7rem; color: var(--muted); letter-spacing: 2px; }
+.topbar-right { font-size: 0.85rem; color: var(--muted); font-style: italic; }
 
-/* ARENA: two columns side by side */
 .arena {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  gap: 0;
-  flex: 1;
-  padding: 16px;
-  gap: 12px;
-  max-width: 1100px;
-  margin: 0 auto;
-  width: 100%;
+  display: grid; grid-template-columns: 1fr auto 1fr;
+  padding: 16px; gap: 12px;
+  max-width: 1100px; margin: 0 auto; width: 100%;
 }
-
 @media (max-width: 700px) {
   .arena { grid-template-columns: 1fr; }
   .vs-col { display: none; }
 }
 
 .kingdom-panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden; display: flex; flex-direction: column;
 }
-
 .kingdom-panel.mine { border-color: var(--p1); }
 .kingdom-panel.theirs { border-color: var(--p2); }
 
 .kp-header {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px; display: flex; align-items: center;
+  justify-content: space-between; border-bottom: 1px solid var(--border);
 }
 .kingdom-panel.mine .kp-header { background: rgba(201,150,26,0.1); }
 .kingdom-panel.theirs .kp-header { background: rgba(74,158,202,0.1); }
-
-.kp-name { font-family: 'Cinzel', serif; font-size: 0.9rem; }
+.kp-name { font-family: 'Cinzel', serif; font-size: 0.95rem; }
 .kingdom-panel.mine .kp-name { color: var(--p1); }
 .kingdom-panel.theirs .kp-name { color: var(--p2); }
-
 .kp-badge {
-  font-size: 0.65rem;
-  padding: 2px 8px;
-  border-radius: 2px;
-  font-family: 'Cinzel', serif;
-  letter-spacing: 1px;
+  font-size: 0.65rem; padding: 2px 8px; border-radius: 2px;
+  font-family: 'Cinzel', serif; letter-spacing: 1px;
 }
 .mine-badge { background: rgba(201,150,26,0.2); color: var(--gold); border: 1px solid var(--gold-dark); }
 .their-badge { background: rgba(74,158,202,0.15); color: var(--blue); border: 1px solid var(--blue); }
 .waiting-badge { background: rgba(122,106,144,0.15); color: var(--muted); border: 1px solid var(--border); animation: pulse 2s infinite; }
 
-/* RESOURCE BAR inside panel */
 .kp-resources {
-  display: flex;
-  gap: 12px;
-  padding: 10px 16px;
-  background: var(--panel2);
-  border-bottom: 1px solid var(--border);
-  flex-wrap: wrap;
+  display: flex; gap: 12px; padding: 10px 16px;
+  background: var(--panel2); border-bottom: 1px solid var(--border); flex-wrap: wrap;
 }
-.kr { flex: 1; min-width: 60px; }
+.kr { flex: 1; min-width: 55px; }
 .kr-val { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold); }
-.kr-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-.kr-rate { font-size: 0.7rem; color: var(--green); }
+.kr-label { font-size: 0.62rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.kr-rate { font-size: 0.68rem; color: var(--green); }
 
-/* PROGRESS BAR */
 .progress-wrap { padding: 8px 16px; border-bottom: 1px solid var(--border); }
-.progress-label { font-size: 0.7rem; color: var(--muted); margin-bottom: 3px; display: flex; justify-content: space-between; }
+.progress-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 3px; display: flex; justify-content: space-between; }
 .progress-bar { height: 6px; background: #2a2535; border-radius: 3px; overflow: hidden; }
-.progress-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 .mine-fill { background: linear-gradient(to right, var(--gold-dark), var(--gold)); }
 .their-fill { background: linear-gradient(to right, #3070a0, var(--blue)); }
 
-.kp-body { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.kp-body { padding: 12px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; max-height: 480px; }
 
-/* BUILDING ROWS */
 .b-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  background: var(--panel2);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  transition: border-color 0.2s;
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: var(--panel2);
+  border: 1px solid var(--border); border-radius: 4px; transition: border-color 0.2s;
 }
 .b-row:hover { border-color: var(--gold-dark); }
-.b-icon { font-size: 1.5rem; width: 32px; text-align: center; }
+.b-icon { font-size: 1.4rem; width: 30px; text-align: center; }
 .b-info { flex: 1; }
-.b-name { font-size: 0.85rem; font-family: 'Cinzel', serif; color: var(--text); }
-.b-stat { font-size: 0.72rem; color: var(--green); }
+.b-name { font-size: 0.82rem; font-family: 'Cinzel', serif; color: var(--text); }
+.b-stat { font-size: 0.7rem; color: var(--green); }
 .b-right { text-align: right; }
 .b-count { font-family: 'Cinzel', serif; color: var(--gold); font-size: 1rem; }
 .btn-buy {
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #5a3e1b, #3d2a0f);
-  border: 1px solid var(--gold-dark);
-  color: var(--gold);
-  font-family: 'Cinzel', serif;
-  font-size: 0.68rem;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: all 0.15s;
-  display: block;
-  margin-top: 3px;
-  white-space: nowrap;
+  padding: 4px 10px; background: linear-gradient(135deg, #5a3e1b, #3d2a0f);
+  border: 1px solid var(--gold-dark); color: var(--gold);
+  font-family: 'Cinzel', serif; font-size: 0.66rem;
+  cursor: pointer; border-radius: 2px; transition: all 0.15s;
+  display: block; margin-top: 3px; white-space: nowrap;
 }
 .btn-buy:hover:not(:disabled) { background: linear-gradient(135deg, #7a5520, #5a3e1b); }
 .btn-buy:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* ABILITIES section */
 .section-sep {
-  font-family: 'Cinzel', serif;
-  font-size: 0.65rem;
-  letter-spacing: 2px;
-  color: var(--muted);
-  text-transform: uppercase;
-  padding: 4px 0 2px;
-  border-top: 1px solid var(--border);
-  margin-top: 4px;
+  font-family: 'Cinzel', serif; font-size: 0.62rem; letter-spacing: 2px;
+  color: var(--muted); text-transform: uppercase;
+  padding: 4px 0 2px; border-top: 1px solid var(--border); margin-top: 2px;
 }
-
 .a-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 10px;
-  background: rgba(74,158,202,0.04);
-  border: 1px solid #2a3a50;
-  border-radius: 4px;
-  transition: border-color 0.2s;
+  display: flex; align-items: center; gap: 10px; padding: 7px 10px;
+  background: rgba(74,158,202,0.04); border: 1px solid #2a3a50;
+  border-radius: 4px; transition: border-color 0.2s;
 }
 .a-row.owned { background: rgba(93,186,106,0.06); border-color: #2d5a3a; }
 .a-row:hover:not(.owned) { border-color: var(--blue); }
 
-/* VS COLUMN */
 .vs-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  min-width: 80px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 16px; min-width: 80px;
 }
-
-.vs-badge {
-  font-family: 'Cinzel', serif;
-  font-size: 1.5rem;
-  color: var(--muted);
-  text-shadow: 0 0 20px rgba(122,106,144,0.4);
-}
-
+.vs-badge { font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--muted); }
 .btn-raid {
-  padding: 8px 14px;
-  background: linear-gradient(135deg, #6a1a1a, #4a0f0f);
-  border: 1px solid var(--red);
-  color: var(--red);
-  font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s;
-  text-align: center;
-  letter-spacing: 1px;
+  padding: 8px 14px; background: linear-gradient(135deg, #6a1a1a, #4a0f0f);
+  border: 1px solid var(--red); color: var(--red);
+  font-family: 'Cinzel', serif; font-size: 0.7rem;
+  cursor: pointer; border-radius: 4px; transition: all 0.2s;
+  text-align: center; letter-spacing: 1px;
 }
 .btn-raid:hover:not(:disabled) { background: linear-gradient(135deg, #8a2a2a, #6a1a1a); box-shadow: 0 0 15px rgba(224,82,82,0.3); }
 .btn-raid:disabled { opacity: 0.3; cursor: not-allowed; }
-.raid-cd { font-size: 0.65rem; color: var(--muted); text-align: center; margin-top: 2px; }
+.raid-cd { font-size: 0.62rem; color: var(--muted); text-align: center; margin-top: 2px; }
 
-/* LOG */
-.game-log {
-  max-width: 1100px;
-  margin: 0 auto 16px;
-  width: 100%;
-  padding: 0 16px;
-}
+.game-log { max-width: 1100px; margin: 0 auto 16px; width: 100%; padding: 0 16px; }
 .log-inner {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 8px 14px;
-  height: 64px;
-  overflow-y: auto;
-  font-size: 0.82rem;
-  color: var(--muted);
-  font-style: italic;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 4px; padding: 8px 14px; height: 70px;
+  overflow-y: auto; font-size: 0.82rem; color: var(--muted); font-style: italic;
 }
 .log-inner p { margin: 1px 0; }
 .log-inner p:first-child { color: var(--text); }
 
-/* WIN SCREEN */
+/* WIN */
 #win-screen {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(8,6,8,0.92);
-  z-index: 100;
-  align-items: center;
-  justify-content: center;
+  display: none; position: fixed; inset: 0;
+  background: rgba(8,6,8,0.93); z-index: 100;
+  align-items: center; justify-content: center;
 }
 .win-box {
-  background: var(--panel);
-  border: 2px solid var(--gold);
-  border-radius: 8px;
-  padding: 48px;
-  text-align: center;
-  max-width: 400px;
+  background: var(--panel); border: 2px solid var(--gold);
+  border-radius: 8px; padding: 48px; text-align: center; max-width: 420px;
 }
 .win-box h2 { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold); text-shadow: 0 0 40px rgba(245,200,66,0.5); }
-.win-box p { color: var(--muted); margin-top: 12px; font-style: italic; }
+.win-box p { color: var(--muted); margin-top: 12px; font-style: italic; font-size: 1.1rem; }
+
+@keyframes flash { 0%{background:rgba(245,200,66,0.15)} 100%{background:transparent} }
+.flash { animation: flash 0.5s ease; }
 </style>
 </head>
 <body>
 
-<!-- ===== LOBBY ===== -->
+<!-- LOBBY -->
 <div id="lobby">
   <div class="logo">
     <h1>⚔️ KINGDOM WARS</h1>
     <p>Two rulers. One victor. Build fast, raid often.</p>
   </div>
 
+  <!-- CREATE -->
   <div class="lobby-box">
     <h2>⚔ Create New Game</h2>
     <div>
       <div class="field-label">Your Kingdom Name</div>
       <input type="text" id="my-name" placeholder="e.g. Iron Throne" maxlength="20">
     </div>
-    <button class="btn-primary" onclick="createGame()">Create Game & Get Link</button>
-
-    <div id="created-section" style="display:none; flex-direction:column; gap:10px;">
-      <div class="field-label">Share this Game ID with your opponent:</div>
+    <button class="btn-primary" id="create-btn" onclick="createGame()">Create Game</button>
+    <div id="create-status" style="display:none">
       <div class="game-id-display" id="game-id-display" onclick="copyId()">—</div>
-      <div class="copy-hint">Click to copy</div>
-      <div class="waiting-pulse" id="waiting-msg">Waiting for opponent to join...</div>
+      <div class="copy-hint">👆 Click to copy — share this code with your friend</div>
+      <div class="status-msg status-waiting" id="waiting-msg">⏳ Waiting for opponent to join...</div>
     </div>
   </div>
 
+  <!-- JOIN -->
   <div class="lobby-box">
     <h2>🛡 Join Existing Game</h2>
     <div>
@@ -411,32 +275,32 @@ input[type="text"]:focus { border-color: var(--purple); }
       <input type="text" id="join-name" placeholder="e.g. Shadow Empire" maxlength="20">
     </div>
     <div>
-      <div class="field-label">Game ID</div>
+      <div class="field-label">Game ID (from your friend)</div>
       <input type="text" id="join-id" placeholder="Enter 6-letter code" maxlength="6" style="text-transform:uppercase">
     </div>
-    <button class="btn-primary" onclick="joinGame()">Join Battle</button>
+    <button class="btn-primary" id="join-btn" onclick="joinGame()">Join Battle</button>
+    <div id="join-status"></div>
   </div>
 </div>
 
-<!-- ===== GAME ===== -->
+<!-- GAME -->
 <div id="game">
   <div class="topbar">
-    <div>
+    <div class="topbar-left">
       <div class="topbar-title">⚔️ KINGDOM WARS</div>
       <div class="topbar-id" id="top-game-id"></div>
     </div>
-    <div style="font-size:0.8rem; color:var(--muted); font-style:italic;" id="top-status">First to 10,000 gold wins!</div>
+    <div class="topbar-right">First to 10,000 gold wins! 🏆</div>
   </div>
 
   <div class="arena">
-    <!-- MY KINGDOM -->
-    <div class="kingdom-panel mine" id="my-panel">
+    <div class="kingdom-panel mine">
       <div class="kp-header">
         <div class="kp-name" id="my-kingdom-name">My Kingdom</div>
         <span class="kp-badge mine-badge">YOU</span>
       </div>
       <div class="kp-resources">
-        <div class="kr"><div class="kr-val" id="my-gold">0</div><div class="kr-label">Gold</div><div class="kr-rate" id="my-rate">0/s</div></div>
+        <div class="kr"><div class="kr-val" id="my-gold">10</div><div class="kr-label">Gold</div><div class="kr-rate" id="my-rate">0/s</div></div>
         <div class="kr"><div class="kr-val" id="my-pop">10</div><div class="kr-label">People</div></div>
         <div class="kr"><div class="kr-val" id="my-power">0</div><div class="kr-label">Power</div></div>
       </div>
@@ -447,17 +311,15 @@ input[type="text"]:focus { border-color: var(--purple); }
       <div class="kp-body" id="my-body"></div>
     </div>
 
-    <!-- VS -->
     <div class="vs-col">
       <div class="vs-badge">VS</div>
       <div>
         <button class="btn-raid" id="raid-btn" onclick="doRaid()" disabled>⚔ RAID</button>
-        <div class="raid-cd" id="raid-cd">Need power to raid</div>
+        <div class="raid-cd" id="raid-cd">Need 5+ power</div>
       </div>
     </div>
 
-    <!-- THEIR KINGDOM -->
-    <div class="kingdom-panel theirs" id="their-panel">
+    <div class="kingdom-panel theirs">
       <div class="kp-header">
         <div class="kp-name" id="their-kingdom-name">Waiting...</div>
         <span class="kp-badge waiting-badge" id="their-badge">WAITING</span>
@@ -472,7 +334,7 @@ input[type="text"]:focus { border-color: var(--purple); }
         <div class="progress-bar"><div class="progress-fill their-fill" id="their-prog" style="width:0%"></div></div>
       </div>
       <div class="kp-body" id="their-body">
-        <div style="text-align:center;color:var(--muted);font-style:italic;padding:40px 0;">Awaiting opponent...</div>
+        <div style="text-align:center;color:var(--muted);font-style:italic;padding:40px 16px">Awaiting opponent...</div>
       </div>
     </div>
   </div>
@@ -482,7 +344,7 @@ input[type="text"]:focus { border-color: var(--purple); }
   </div>
 </div>
 
-<!-- WIN SCREEN -->
+<!-- WIN -->
 <div id="win-screen">
   <div class="win-box">
     <div style="font-size:3rem" id="win-icon">🏆</div>
@@ -493,224 +355,273 @@ input[type="text"]:focus { border-color: var(--purple); }
 </div>
 
 <script>
-// ========== BUILDINGS ==========
+// ===== FIREBASE INIT =====
+const firebaseConfig = {
+  databaseURL: "https://kingdom-wars-e7879-default-rtdb.firebaseio.com"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===== CONSTANTS =====
+const WIN_GOLD = 10000;
+const RAID_COOLDOWN = 30000; // ms
+const SAVE_INTERVAL = 1500;  // save to Firebase every 1.5s
+const TICK = 200;            // local tick ms
+
 const BUILDINGS = [
-  { id:'farm',    name:'Farm',         icon:'🌾', baseCost:10,   costMult:1.4,  goldPerSec:0.5, popPerSec:0.2, unlockAt:0 },
-  { id:'market',  name:'Market',       icon:'🏪', baseCost:60,   costMult:1.5,  goldPerSec:2,   popPerSec:0.1, unlockAt:30 },
-  { id:'mine',    name:'Gold Mine',    icon:'⛏️', baseCost:250,  costMult:1.55, goldPerSec:8,   popPerSec:0,   unlockAt:120 },
-  { id:'barracks',name:'Barracks',     icon:'🏰', baseCost:500,  costMult:1.6,  goldPerSec:3,   popPerSec:0,   power:5, unlockAt:300 },
-  { id:'wizard',  name:"Wizard Tower", icon:'🔮', baseCost:2000, costMult:1.7,  goldPerSec:20,  popPerSec:0,   unlockAt:1200 },
+  { id:'farm',     name:'Farm',          icon:'🌾', baseCost:10,   costMult:1.4,  goldPerSec:0.5, popPerSec:0.2, power:0, unlockAt:0 },
+  { id:'market',   name:'Market',        icon:'🏪', baseCost:60,   costMult:1.5,  goldPerSec:2,   popPerSec:0.1, power:0, unlockAt:30 },
+  { id:'mine',     name:'Gold Mine',     icon:'⛏️', baseCost:250,  costMult:1.55, goldPerSec:8,   popPerSec:0,   power:0, unlockAt:120 },
+  { id:'barracks', name:'Barracks',      icon:'🏰', baseCost:500,  costMult:1.6,  goldPerSec:3,   popPerSec:0,   power:5, unlockAt:300 },
+  { id:'wizard',   name:"Wizard Tower",  icon:'🔮', baseCost:2000, costMult:1.7,  goldPerSec:20,  popPerSec:0,   power:0, unlockAt:1200 },
 ];
 
 const ABILITIES = [
-  { id:'tools',    name:'Iron Tools',    icon:'🔧', cost:80,   desc:'+50% all gold',     unlockAt:50,   effect:'mult+0.5' },
-  { id:'routes',   name:'Trade Routes',  icon:'🗺️', cost:300,  desc:'All income ×1.5',  unlockAt:200,  effect:'mult+0.5' },
-  { id:'alchemy',  name:'Alchemy',       icon:'⚗️', cost:1500, desc:'Pop→gold +0.1/pop', unlockAt:1000, effect:'alchemy' },
-  { id:'doctrine', name:'War Doctrine',  icon:'⚔️', cost:3000, desc:'Power→gold +1/pwr', unlockAt:2000, effect:'doctrine' },
-  { id:'blessing', name:'Divine Blessing',icon:'✨',cost:10000,desc:'All income ×2',     unlockAt:7000, effect:'mult+1' },
+  { id:'tools',    name:'Iron Tools',      icon:'🔧', cost:80,    desc:'+50% income',      unlockAt:50,   effect:'mult+0.5' },
+  { id:'routes',   name:'Trade Routes',    icon:'🗺️', cost:300,   desc:'All income ×1.5',  unlockAt:200,  effect:'mult+0.5' },
+  { id:'alchemy',  name:'Alchemy',         icon:'⚗️', cost:1500,  desc:'Pop→gold +0.1/pop',unlockAt:1000, effect:'alchemy'  },
+  { id:'doctrine', name:'War Doctrine',    icon:'⚔️', cost:3000,  desc:'Power→gold +1/pwr',unlockAt:2000, effect:'doctrine' },
+  { id:'blessing', name:'Divine Blessing', icon:'✨', cost:10000, desc:'All income ×2',    unlockAt:7000, effect:'mult+1'   },
 ];
 
-const WIN_GOLD = 10000;
-const RAID_COOLDOWN = 30; // seconds
-const SYNC_INTERVAL = 2000;
-
-// ========== STATE ==========
+// ===== STATE =====
 let gameId = '';
 let myRole = ''; // 'p1' or 'p2'
 let gameRunning = false;
+let winShown = false;
+let myState = null;
+let theirState = null;
 
-function freshKingdom(name) {
+function freshState(name) {
   return {
     name,
     gold: 10,
     population: 10,
-    power: 0,
     multiplier: 1,
     alchemyActive: false,
     warDoctrine: false,
     buildings: { farm:0, market:0, mine:0, barracks:0, wizard:0 },
     abilities: [],
-    lastUpdate: Date.now(),
     raidCooldownUntil: 0,
+    lastSave: Date.now(),
   };
 }
 
-let myState = null;
-let theirState = null;
-let raidCooldownUntil = 0;
-
-// ========== STORAGE HELPERS ==========
-async function saveMyState() {
-  myState.lastUpdate = Date.now();
-  try {
-    await window.storage.set(`game:${gameId}:${myRole}`, JSON.stringify(myState), true);
-  } catch(e) {}
+// ===== HELPERS =====
+function fmt(n) {
+  if (n === null || n === undefined) return '—';
+  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.floor(n).toString();
 }
 
-async function loadTheirState() {
-  const role = myRole === 'p1' ? 'p2' : 'p1';
-  try {
-    const res = await window.storage.get(`game:${gameId}:${role}`, true);
-    if (res) return JSON.parse(res.value);
-  } catch(e) {}
-  return null;
-}
-
-async function saveGameMeta(meta) {
-  try { await window.storage.set(`game:${gameId}:meta`, JSON.stringify(meta), true); } catch(e) {}
-}
-
-async function loadGameMeta() {
-  try {
-    const res = await window.storage.get(`game:${gameId}:meta`, true);
-    if (res) return JSON.parse(res.value);
-  } catch(e) {}
-  return null;
-}
-
-// ========== LOBBY ==========
 function genId() {
   return Math.random().toString(36).substring(2,8).toUpperCase();
 }
 
+function calcRates(s) {
+  let g = 0, pop = 0, pwr = 0;
+  for (const b of BUILDINGS) {
+    const cnt = s.buildings[b.id] || 0;
+    g   += b.goldPerSec * cnt;
+    pop += (b.popPerSec || 0) * cnt;
+    pwr += (b.power || 0) * cnt;
+  }
+  if (s.alchemyActive) g += (s.population || 0) * 0.1;
+  if (s.warDoctrine)   g += pwr;
+  g *= (s.multiplier || 1);
+  return { g, pop, pwr };
+}
+
+function getBuildingCost(b, count) {
+  return Math.floor(b.baseCost * Math.pow(b.costMult, count));
+}
+
+// ===== FIREBASE PATHS =====
+function myRef()    { return db.ref(`games/${gameId}/${myRole}`); }
+function theirRef() { return db.ref(`games/${gameId}/${myRole === 'p1' ? 'p2' : 'p1'}`); }
+function metaRef()  { return db.ref(`games/${gameId}/meta`); }
+
+// ===== CLEANUP old games (>24h) =====
+async function cleanOldGames() {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  try {
+    const snap = await db.ref('games').once('value');
+    const games = snap.val();
+    if (!games) return;
+    for (const [id, g] of Object.entries(games)) {
+      if (g.meta && g.meta.createdAt < cutoff) {
+        db.ref(`games/${id}`).remove();
+      }
+    }
+  } catch(e) {}
+}
+
+// ===== LOBBY =====
 async function createGame() {
   const name = document.getElementById('my-name').value.trim() || 'Iron Throne';
+  document.getElementById('create-btn').disabled = true;
+  cleanOldGames();
+
   gameId = genId();
   myRole = 'p1';
-  myState = freshKingdom(name);
+  myState = freshState(name);
 
-  await saveMyState();
-  await saveGameMeta({ p1name: name, p2name: null, started: false });
+  await metaRef().set({ p1name: name, p2name: null, createdAt: Date.now(), winner: null });
+  await myRef().set(myState);
 
   document.getElementById('game-id-display').textContent = gameId;
-  document.getElementById('created-section').style.display = 'flex';
+  document.getElementById('create-status').style.display = 'flex';
+  document.getElementById('create-status').style.flexDirection = 'column';
+  document.getElementById('create-status').style.gap = '8px';
 
-  // Poll for p2 joining
-  const waitInterval = setInterval(async () => {
-    const meta = await loadGameMeta();
+  // Listen for p2 joining
+  metaRef().on('value', snap => {
+    const meta = snap.val();
     if (meta && meta.p2name) {
-      clearInterval(waitInterval);
-      await saveGameMeta({ ...meta, started: true });
+      metaRef().off();
       startGame(name, meta.p2name);
     }
-  }, 2000);
+  });
 }
 
 async function joinGame() {
   const name = document.getElementById('join-name').value.trim() || 'Shadow Empire';
   const id = document.getElementById('join-id').value.trim().toUpperCase();
-  if (!id || id.length !== 6) { alert('Enter a valid 6-letter Game ID'); return; }
+  const statusEl = document.getElementById('join-status');
 
-  const meta = await loadGameMeta();
-  // Try anyway even if meta fetch failed (eventual consistency)
-  gameId = id;
-  myRole = 'p2';
-  myState = freshKingdom(name);
+  if (!id || id.length !== 6) {
+    statusEl.innerHTML = '<div class="status-msg status-error">Enter a valid 6-letter Game ID</div>';
+    return;
+  }
 
-  const p1name = (meta && meta.p1name) ? meta.p1name : 'Opponent';
-  await saveMyState();
+  document.getElementById('join-btn').disabled = true;
+  statusEl.innerHTML = '<div class="status-msg status-waiting">⏳ Connecting...</div>';
 
-  let newMeta = meta ? { ...meta, p2name: name, started: true } : { p1name: p1name, p2name: name, started: true };
-  await saveGameMeta(newMeta);
+  try {
+    const snap = await db.ref(`games/${id}/meta`).once('value');
+    const meta = snap.val();
 
-  startGame(name, p1name);
+    if (!meta) {
+      statusEl.innerHTML = '<div class="status-msg status-error">❌ Game not found. Check the code.</div>';
+      document.getElementById('join-btn').disabled = false;
+      return;
+    }
+    if (meta.p2name) {
+      statusEl.innerHTML = '<div class="status-msg status-error">❌ Game is already full.</div>';
+      document.getElementById('join-btn').disabled = false;
+      return;
+    }
+
+    gameId = id;
+    myRole = 'p2';
+    myState = freshState(name);
+
+    await db.ref(`games/${id}/p2`).set(myState);
+    await db.ref(`games/${id}/meta`).update({ p2name: name });
+
+    startGame(name, meta.p1name);
+  } catch(e) {
+    statusEl.innerHTML = '<div class="status-msg status-error">❌ Connection error. Try again.</div>';
+    document.getElementById('join-btn').disabled = false;
+  }
 }
 
 function copyId() {
   navigator.clipboard.writeText(gameId).catch(() => {});
-  document.getElementById('game-id-display').textContent = 'COPIED!';
-  setTimeout(() => document.getElementById('game-id-display').textContent = gameId, 1500);
+  const el = document.getElementById('game-id-display');
+  el.textContent = 'COPIED! ✓';
+  setTimeout(() => el.textContent = gameId, 1800);
 }
 
-// ========== GAME START ==========
+// ===== START GAME =====
 function startGame(myName, theirName) {
   document.getElementById('lobby').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
-  document.getElementById('top-game-id').textContent = 'GAME: ' + gameId;
+  document.getElementById('top-game-id').textContent = 'GAME ID: ' + gameId;
   document.getElementById('my-kingdom-name').textContent = myName;
   document.getElementById('their-kingdom-name').textContent = theirName || 'Opponent';
   document.getElementById('their-badge').textContent = 'OPPONENT';
   document.getElementById('their-badge').className = 'kp-badge their-badge';
 
   gameRunning = true;
+
+  // Listen to opponent in real-time via Firebase
+  theirRef().on('value', snap => {
+    const data = snap.val();
+    if (data) {
+      theirState = data;
+      renderTheirs();
+      checkWin();
+    }
+  });
+
+  // Listen for raids on us
+  db.ref(`games/${gameId}/raids`).on('child_added', snap => {
+    const raid = snap.val();
+    if (raid && raid.target === myRole && raid.at > (Date.now() - 5000)) {
+      const stolen = Math.floor(myState.gold * 0.15);
+      myState.gold = Math.max(0, myState.gold - stolen);
+      logMsg(`🔥 You were RAIDED! Lost ${fmt(stolen)} gold!`);
+    }
+  });
+
+  // Listen for winner
+  metaRef().on('value', snap => {
+    const meta = snap.val();
+    if (meta && meta.winner && !winShown) {
+      const iWon = meta.winner === myRole;
+      showWin(iWon, iWon ? myName : theirName);
+    }
+  });
+
   gameLoop();
-  syncLoop();
-  logMsg('⚔️ Battle started! First to ' + WIN_GOLD.toLocaleString() + ' gold wins!');
+  saveLoop();
+  logMsg('⚔️ Battle started! First to 10,000 gold wins!');
 }
 
-// ========== RATES ==========
-function calcRates(s) {
-  let g = 0, pop = 0, pwr = 0;
-  for (const b of BUILDINGS) {
-    g += (b.goldPerSec || 0) * (s.buildings[b.id] || 0);
-    pop += (b.popPerSec || 0) * (s.buildings[b.id] || 0);
-    pwr += (b.power || 0) * (s.buildings[b.id] || 0);
-  }
-  if (s.alchemyActive) g += s.population * 0.1;
-  if (s.warDoctrine) g += pwr;
-  g *= s.multiplier;
-  pop *= 1;
-  return { g, pop, pwr };
-}
-
-// ========== GAME LOOP (local tick) ==========
-const TICK = 200;
+// ===== GAME LOOP (local smooth ticking) =====
 function gameLoop() {
   if (!gameRunning) return;
   const dt = TICK / 1000;
-  const { g, pop, pwr } = calcRates(myState);
+  const { g, pop } = calcRates(myState);
   myState.gold += g * dt;
-  myState.population += pop * dt;
-  myState.power = pwr;
-
+  myState.population = Math.max(10, myState.population + pop * dt);
   renderMine();
-  checkWin();
-
   setTimeout(gameLoop, TICK);
 }
 
-// ========== SYNC LOOP ==========
-let syncTimer = 0;
-async function syncLoop() {
+// ===== SAVE LOOP (push to Firebase periodically) =====
+function saveLoop() {
   if (!gameRunning) return;
-  await saveMyState();
-  const t = await loadTheirState();
-  if (t) {
-    theirState = t;
-    renderTheirs();
-  }
-  setTimeout(syncLoop, SYNC_INTERVAL);
+  myState.lastSave = Date.now();
+  myRef().set(myState).catch(() => {});
+  setTimeout(saveLoop, SAVE_INTERVAL);
 }
 
-// ========== RENDER ==========
-function fmt(n) {
-  if (!n && n !== 0) return '—';
-  if (n >= 1e6) return (n/1e6).toFixed(1)+'M';
-  if (n >= 1e3) return (n/1e3).toFixed(1)+'K';
-  return Math.floor(n).toString();
-}
-
+// ===== RENDER MY PANEL =====
 function renderMine() {
   const { g, pop, pwr } = calcRates(myState);
   document.getElementById('my-gold').textContent = fmt(myState.gold);
   document.getElementById('my-pop').textContent = fmt(myState.population);
   document.getElementById('my-power').textContent = fmt(pwr);
-  document.getElementById('my-rate').textContent = '+'+g.toFixed(1)+'/s';
+  document.getElementById('my-rate').textContent = '+' + g.toFixed(1) + '/s';
+
   const pct = Math.min(100, (myState.gold / WIN_GOLD) * 100);
   document.getElementById('my-prog').style.width = pct + '%';
   document.getElementById('my-pct').textContent = pct.toFixed(1) + '%';
 
   // Raid button
   const now = Date.now();
-  const raidReady = pwr >= 5 && now > myState.raidCooldownUntil;
-  document.getElementById('raid-btn').disabled = !raidReady || !theirState;
+  const raidReady = pwr >= 5 && now > (myState.raidCooldownUntil || 0) && theirState;
+  document.getElementById('raid-btn').disabled = !raidReady;
   if (pwr < 5) {
-    document.getElementById('raid-cd').textContent = 'Need 5+ power to raid';
-  } else if (now < myState.raidCooldownUntil) {
-    const secs = Math.ceil((myState.raidCooldownUntil - now) / 1000);
+    document.getElementById('raid-cd').textContent = 'Need 5+ power';
+  } else if (now < (myState.raidCooldownUntil || 0)) {
+    const secs = Math.ceil(((myState.raidCooldownUntil || 0) - now) / 1000);
     document.getElementById('raid-cd').textContent = 'Cooldown: ' + secs + 's';
   } else {
-    document.getElementById('raid-cd').textContent = 'Ready to raid!';
+    document.getElementById('raid-cd').textContent = theirState ? '⚔️ Ready!' : 'No opponent yet';
   }
 
   renderMyBuildings();
@@ -721,16 +632,16 @@ function renderMyBuildings() {
   body.innerHTML = '';
 
   // Buildings
-  const bsec = document.createElement('div');
-  bsec.className = 'section-sep';
-  bsec.textContent = '🏗 Buildings';
-  body.appendChild(bsec);
+  const bs = document.createElement('div');
+  bs.className = 'section-sep';
+  bs.textContent = '🏗 Buildings';
+  body.appendChild(bs);
 
   for (const b of BUILDINGS) {
-    const unlocked = myState.gold >= b.unlockAt || (myState.buildings[b.id] || 0) > 0;
-    if (!unlocked) continue;
     const count = myState.buildings[b.id] || 0;
-    const cost = Math.floor(b.baseCost * Math.pow(b.costMult, count));
+    const unlocked = myState.gold >= b.unlockAt || count > 0;
+    if (!unlocked) continue;
+    const cost = getBuildingCost(b, count);
     const canAfford = myState.gold >= cost;
 
     const row = document.createElement('div');
@@ -739,26 +650,27 @@ function renderMyBuildings() {
       <div class="b-icon">${b.icon}</div>
       <div class="b-info">
         <div class="b-name">${b.name}</div>
-        <div class="b-stat">+${b.goldPerSec}g/s${b.power?' +'+b.power+'pwr':''}</div>
+        <div class="b-stat">+${b.goldPerSec}g/s${b.power ? ' +' + b.power + 'pwr' : ''}</div>
       </div>
       <div class="b-right">
         <div class="b-count">${count}</div>
-        <button class="btn-buy" onclick="buyBuilding('${b.id}')" ${canAfford?'':'disabled'}>Buy 💰${fmt(cost)}</button>
-      </div>
-    `;
+        <button class="btn-buy" onclick="buyBuilding('${b.id}')" ${canAfford ? '' : 'disabled'}>
+          Buy 💰${fmt(cost)}
+        </button>
+      </div>`;
     body.appendChild(row);
   }
 
   // Abilities
-  const asec = document.createElement('div');
-  asec.className = 'section-sep';
-  asec.textContent = '✨ Abilities';
-  body.appendChild(asec);
+  const as = document.createElement('div');
+  as.className = 'section-sep';
+  as.textContent = '✨ Abilities';
+  body.appendChild(as);
 
   for (const a of ABILITIES) {
-    const unlocked = myState.gold >= a.unlockAt || myState.abilities.includes(a.id);
+    const owned = (myState.abilities || []).includes(a.id);
+    const unlocked = myState.gold >= a.unlockAt || owned;
     if (!unlocked) continue;
-    const owned = myState.abilities.includes(a.id);
     const canAfford = myState.gold >= a.cost;
 
     const row = document.createElement('div');
@@ -771,55 +683,61 @@ function renderMyBuildings() {
       </div>
       <div class="b-right">
         ${owned
-          ? '<span style="font-size:0.7rem;color:var(--green)">ACTIVE</span>'
-          : `<button class="btn-buy" onclick="buyAbility('${a.id}')" ${canAfford?'':'disabled'}>Unlock 💰${fmt(a.cost)}</button>`
+          ? '<span style="font-size:0.7rem;color:var(--green)">✓ ACTIVE</span>'
+          : `<button class="btn-buy" onclick="buyAbility('${a.id}')" ${canAfford ? '' : 'disabled'}>Unlock 💰${fmt(a.cost)}</button>`
         }
-      </div>
-    `;
+      </div>`;
     body.appendChild(row);
   }
 }
 
+// ===== RENDER THEIR PANEL =====
 function renderTheirs() {
   if (!theirState) return;
   const { g, pwr } = calcRates(theirState);
+
   document.getElementById('their-gold').textContent = fmt(theirState.gold);
   document.getElementById('their-pop').textContent = fmt(theirState.population);
   document.getElementById('their-power').textContent = fmt(pwr);
-  document.getElementById('their-rate').textContent = '+'+g.toFixed(1)+'/s';
-  const pct = Math.min(100, (theirState.gold / WIN_GOLD) * 100);
+  document.getElementById('their-rate').textContent = '+' + g.toFixed(1) + '/s';
+
+  const pct = Math.min(100, ((theirState.gold || 0) / WIN_GOLD) * 100);
   document.getElementById('their-prog').style.width = pct + '%';
   document.getElementById('their-pct').textContent = pct.toFixed(1) + '%';
 
   const body = document.getElementById('their-body');
   body.innerHTML = '';
 
-  const bsec = document.createElement('div');
-  bsec.className = 'section-sep';
-  bsec.textContent = '🏗 Buildings';
-  body.appendChild(bsec);
+  const bs = document.createElement('div');
+  bs.className = 'section-sep';
+  bs.textContent = '🏗 Buildings';
+  body.appendChild(bs);
 
+  let hasBuildings = false;
   for (const b of BUILDINGS) {
-    const count = theirState.buildings[b.id] || 0;
+    const count = (theirState.buildings && theirState.buildings[b.id]) || 0;
     if (count === 0) continue;
+    hasBuildings = true;
     const row = document.createElement('div');
     row.className = 'b-row';
     row.innerHTML = `
       <div class="b-icon">${b.icon}</div>
-      <div class="b-info">
-        <div class="b-name">${b.name}</div>
-        <div class="b-stat">+${b.goldPerSec}g/s</div>
-      </div>
-      <div class="b-right"><div class="b-count">${count}</div></div>
-    `;
+      <div class="b-info"><div class="b-name">${b.name}</div><div class="b-stat">+${b.goldPerSec}g/s</div></div>
+      <div class="b-right"><div class="b-count">${count}</div></div>`;
     body.appendChild(row);
+  }
+  if (!hasBuildings) {
+    const p = document.createElement('div');
+    p.style.cssText = 'color:var(--muted);font-style:italic;font-size:0.82rem;padding:8px 0;';
+    p.textContent = 'No buildings yet...';
+    body.appendChild(p);
   }
 
   if (theirState.abilities && theirState.abilities.length > 0) {
-    const asec = document.createElement('div');
-    asec.className = 'section-sep';
-    asec.textContent = '✨ Abilities';
-    body.appendChild(asec);
+    const as = document.createElement('div');
+    as.className = 'section-sep';
+    as.textContent = '✨ Abilities';
+    body.appendChild(as);
     for (const aid of theirState.abilities) {
       const a = ABILITIES.find(x => x.id === aid);
       if (!a) continue;
@@ -831,22 +749,23 @@ function renderTheirs() {
   }
 }
 
-// ========== ACTIONS ==========
+// ===== ACTIONS =====
 function buyBuilding(id) {
   const b = BUILDINGS.find(x => x.id === id);
   const count = myState.buildings[id] || 0;
-  const cost = Math.floor(b.baseCost * Math.pow(b.costMult, count));
+  const cost = getBuildingCost(b, count);
   if (myState.gold < cost) return;
   myState.gold -= cost;
   myState.buildings[id] = count + 1;
-  logMsg(`Built ${b.name} #${count+1}`);
+  logMsg(`Built ${b.name} #${count + 1} — ${fmt(cost)}g spent`);
 }
 
 function buyAbility(id) {
   const a = ABILITIES.find(x => x.id === id);
-  if (!a || myState.abilities.includes(id)) return;
+  if (!a || (myState.abilities || []).includes(id)) return;
   if (myState.gold < a.cost) return;
   myState.gold -= a.cost;
+  if (!myState.abilities) myState.abilities = [];
   myState.abilities.push(id);
   applyAbility(a.effect);
   logMsg(`✨ Unlocked ${a.name}!`);
@@ -854,7 +773,7 @@ function buyAbility(id) {
 
 function applyAbility(effect) {
   if (effect.startsWith('mult+')) {
-    myState.multiplier += parseFloat(effect.split('+')[1]);
+    myState.multiplier = (myState.multiplier || 1) + parseFloat(effect.split('+')[1]);
   } else if (effect === 'alchemy') {
     myState.alchemyActive = true;
   } else if (effect === 'doctrine') {
@@ -866,59 +785,61 @@ async function doRaid() {
   const { pwr } = calcRates(myState);
   if (pwr < 5 || !theirState) return;
   const now = Date.now();
-  if (now < myState.raidCooldownUntil) return;
+  if (now < (myState.raidCooldownUntil || 0)) return;
 
-  const stolen = Math.floor(theirState.gold * 0.15);
+  const stolen = Math.floor((theirState.gold || 0) * 0.15);
   myState.gold += stolen;
-  myState.raidCooldownUntil = now + RAID_COOLDOWN * 1000;
+  myState.raidCooldownUntil = now + RAID_COOLDOWN;
 
-  // Write raid event to shared storage so opponent sees it
-  try {
-    await window.storage.set(`game:${gameId}:raid`, JSON.stringify({
-      by: myRole,
-      stolen,
-      at: now,
-    }), true);
-  } catch(e) {}
+  // Write raid event to Firebase so opponent gets notified
+  const theirRole = myRole === 'p1' ? 'p2' : 'p1';
+  await db.ref(`games/${gameId}/raids`).push({
+    by: myRole, target: theirRole, stolen, at: now
+  });
 
-  await saveMyState();
-  logMsg(`⚔️ RAID! Stole ${fmt(stolen)} gold from the enemy!`);
-  document.getElementById('raid-btn').disabled = true;
+  logMsg(`⚔️ RAIDED! Stole ${fmt(stolen)} gold from the enemy!`);
 }
 
-// ========== WIN CHECK ==========
+// ===== WIN CHECK =====
 function checkWin() {
-  if (myState.gold >= WIN_GOLD) {
-    showWin(true, myState.name);
-  } else if (theirState && theirState.gold >= WIN_GOLD) {
-    showWin(false, theirState.name);
+  if (winShown) return;
+  const myWon = myState.gold >= WIN_GOLD;
+  const theyWon = theirState && theirState.gold >= WIN_GOLD;
+  if (myWon || theyWon) {
+    const winner = myWon ? myRole : (myRole === 'p1' ? 'p2' : 'p1');
+    metaRef().update({ winner }).catch(() => {});
   }
 }
 
 function showWin(iWon, winnerName) {
-  if (!gameRunning) return;
+  if (winShown) return;
+  winShown = true;
   gameRunning = false;
+  // Cleanup Firebase listeners
+  theirRef().off();
+  metaRef().off();
+  db.ref(`games/${gameId}/raids`).off();
+
   const screen = document.getElementById('win-screen');
   screen.style.display = 'flex';
-  if (iWon) {
-    document.getElementById('win-icon').textContent = '🏆';
-    document.getElementById('win-title').textContent = 'VICTORY!';
-    document.getElementById('win-desc').textContent = `${winnerName} has amassed 10,000 gold and conquered the realm!`;
-  } else {
-    document.getElementById('win-icon').textContent = '💀';
-    document.getElementById('win-title').textContent = 'DEFEATED';
-    document.getElementById('win-desc').textContent = `${winnerName} reached 10,000 gold first. Your kingdom falls.`;
-  }
+  document.getElementById('win-icon').textContent = iWon ? '🏆' : '💀';
+  document.getElementById('win-title').textContent = iWon ? 'VICTORY!' : 'DEFEATED';
+  document.getElementById('win-desc').textContent = iWon
+    ? `${winnerName} has amassed 10,000 gold and conquered the realm!`
+    : `${winnerName} reached 10,000 gold first. Your kingdom falls...`;
+
+  // Delete game from Firebase after win
+  setTimeout(() => db.ref(`games/${gameId}`).remove().catch(() => {}), 3000);
 }
 
-// ========== LOG ==========
+// ===== LOG =====
 function logMsg(msg) {
   const box = document.getElementById('game-log');
   const p = document.createElement('p');
-  const t = new Date().toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const t = new Date().toLocaleTimeString('en', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
   p.textContent = `[${t}] ${msg}`;
   box.insertBefore(p, box.firstChild);
-  while (box.children.length > 15) box.removeChild(box.lastChild);
+  while (box.children.length > 20) box.removeChild(box.lastChild);
 }
 </script>
 </body>
