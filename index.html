@@ -1099,7 +1099,7 @@ function renderTheirs() {
   } else {
     // FOG OF WAR
     const rate = goldRateLabel(g);
-    const totalBuildings = BUILDINGS.reduce((s,b) => s + ((theirState.buildings && theirState.buildings[b.id]) || 0), 0);
+    const totalBuildings = theirState.buildings ? Object.values(theirState.buildings).reduce((s, v) => s + (Number(v) || 0), 0) : 0;
     const totalAbilities = (theirState.abilities || []).length;
 
     document.getElementById('their-gold').textContent = '???';
