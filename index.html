@@ -39,7 +39,7 @@ body {
 
 /* ===== LOBBY ===== */
 #lobby {
-  display: flex; flex-direction: column; align-items: center;
+  display: none; flex-direction: column; align-items: center;
   justify-content: center; min-height: 100vh; padding: 32px 16px; gap: 28px;
 }
 .logo { text-align: center; }
@@ -370,8 +370,14 @@ input[type="text"]:focus { border-color: var(--purple); }
 </head>
 <body>
 
+<!-- LOADING SCREEN -->
+<div id="loading-screen" style="display:flex;position:fixed;inset:0;background:#080608;z-index:999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div style="font-family:'Cinzel',serif;font-size:1.8rem;color:#c9961a;letter-spacing:6px;text-shadow:0 0 30px rgba(245,200,66,0.4);">⚔️ KINGDOM WARS</div>
+  <div style="color:#7a6a90;font-style:italic;font-size:0.9rem;animation:pulse 1.5s infinite;">Restoring kingdom...</div>
+</div>
+
 <!-- LOBBY -->
-<div id="lobby">
+<div id="lobby" style="display:none;">
   <div class="logo">
     <h1>⚔️ KINGDOM WARS</h1>
     <p>Two rulers. One victor. Build fast, raid often.</p>
@@ -577,6 +583,14 @@ async function tryRestoreSession() {
     if (s.spyUntil) spyUntil = s.spyUntil;
     if (s.spyCooldownUntil) spyCooldownUntil = s.spyCooldownUntil;
     if (s.sabotCooldownUntil) sabotCooldownUntil = s.sabotCooldownUntil;
+
+    // Catch up gold for time elapsed while page was closed/refreshed
+    if (myState.lastSave) {
+      const elapsed = Math.min((Date.now() - myState.lastSave) / 1000, 300); // max 5 min catch-up
+      const { g, pop } = calcRates(myState);
+      myState.gold += g * elapsed;
+      myState.population = Math.max(10, myState.population + pop * elapsed);
+    }
 
     const theirName = s.theirName || (myRole === 'p1' ? meta.p2name : meta.p1name);
     startGame(myState.name, theirName || 'Opponent');
@@ -851,9 +865,13 @@ function startGame(myName, theirName) {
 }
 
 // ===== GAME LOOP (local smooth ticking) =====
+let lastTick = 0;
 function gameLoop() {
   if (!gameRunning) return;
-  const dt = TICK / 1000;
+  const now = Date.now();
+  // Use real elapsed time — works even if tab was backgrounded
+  const dt = lastTick ? Math.min((now - lastTick) / 1000, 10) : (TICK / 1000); // cap at 10s catch-up
+  lastTick = now;
   const { g, pop } = calcRates(myState);
   myState.gold += g * dt;
   myState.population = Math.max(10, myState.population + pop * dt);
@@ -1291,7 +1309,16 @@ async function exitGame() {
 
 // ===== INIT: try to restore session on page load =====
 window.addEventListener('load', async () => {
-  await tryRestoreSession();
+  const restored = await tryRestoreSession();
+  const loading = document.getElementById('loading-screen');
+  if (!restored) {
+    // No session — show lobby
+    loading.style.display = 'none';
+    document.getElementById('lobby').style.display = 'flex';
+  } else {
+    // Session restored — game is already showing
+    loading.style.display = 'none';
+  }
 });
 
 // ===== LOG =====
